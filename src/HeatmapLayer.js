@@ -57,6 +57,11 @@ function isInvalidLatLngArray(arr: Array<number>): boolean {
   return !isValidLatLngArray(arr);
 }
 
+function isTrue(cond: boolean): boolean {
+  if (cond) return true;
+  return false;
+}
+
 function isInvalid(num: number): boolean {
   return !isNumber(num) && !num;
 }
@@ -97,7 +102,7 @@ export default class HeatmapLayer extends MapLayer {
     }
 
     this.attachEvents();
-    this.updateHeatmapProps(this.getHeatmapProps(this.props));
+      this.updateHeatmapProps(this.getHeatmapProps(this.props), true);
     this.reset();
   }
 
@@ -133,21 +138,38 @@ export default class HeatmapLayer extends MapLayer {
   }
 
   componentWillReceiveProps(nextProps: Object): void {
-    this.updateHeatmapProps(this.getHeatmapProps(nextProps));
+      this.updateHeatmapProps(this.getHeatmapProps(nextProps), false);
   }
 
-  updateHeatmapProps(nextProps: Object) {
-    if (nextProps.radius
-      && (!this.props || nextProps.radius !== this.props.radius)) {
-      this._heatmap.radius(nextProps.radius);
-    }
+  updateHeatmapProps(nextProps: Object, firstUpdate: boolean) {
+      if (
+          [
+              [
+                  nextProps.radius,
+                  [
+                      firstUpdate,
+                      nextProps.radius !== this.props.radius,
+                  ].some(isTrue),
+              ].every(isTrue),
+              [
+                  nextProps.blur,
+                  [
+                      firstUpdate,
+                      nextProps.blur !== this.props.blur,
+                  ].some(isTrue),
+              ].every(isTrue),
+          ].some(isTrue)
+      ) {
+          this._heatmap.radius(nextProps.radius, nextProps.blur);
+      }
+
 
     if (nextProps.gradient) {
       this._heatmap.gradient(nextProps.gradient);
     }
 
     if (nextProps.max
-      && (!this.props || nextProps.max !== this.props.max)) {
+      && (firstUpdate || nextProps.max !== this.props.max)) {
       this._heatmap.max(nextProps.max);
     }
   }
